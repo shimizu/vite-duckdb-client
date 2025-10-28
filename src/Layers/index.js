@@ -1,11 +1,12 @@
-import { BitmapLayer } from '@deck.gl/layers';
+import { GeoJsonLayer, BitmapLayer  } from '@deck.gl/layers';
 import { TileLayer } from '@deck.gl/geo-layers';
 
 export function renderLayers(props) {
+    const { data } = props;
 
     //OSMタイルを読み込みベースマップとして表示
     const tileLayer = new TileLayer({
-        data: "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        data: "https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png",
 
         minZoom: 0,
         maxZoom: 19,
@@ -24,5 +25,18 @@ export function renderLayers(props) {
         }
     });
 
-    return [tileLayer];
+    const geojsonLayer = new GeoJsonLayer({
+        id: 'geojson-layer',
+        data: data,
+        pickable: true,
+        stroked: false,
+        filled: true,
+        pointType: 'circle',
+        pointRadiusMinPixels: 5,
+        getPointRadius: 10,
+        getFillColor: [255, 0, 0],
+    });
+    
+
+    return [tileLayer, geojsonLayer];
 }
