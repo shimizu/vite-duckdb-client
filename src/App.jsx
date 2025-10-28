@@ -53,7 +53,7 @@ export default function App() {
   const [deckGlData, setDeckGlData] = useState(null);   // 地図用のGeoJSONを保持
   const [queryError, setQueryError] = useState(null);
   const [isQuerying, setIsQuerying] = useState(false);
-  const [query, setQuery] = useState("SELECT P18_001, P18_004, ST_AsGeoJSON(geometry) as geojson FROM 'https://storage.googleapis.com/g3-open-resource/parquet/police_station2.parquet';");
+  const [query, setQuery] = useState("SELECT *, ST_AsGeoJSON(geometry) as geojson FROM 'https://storage.googleapis.com/g3-open-resource/parquet/police_station2.parquet';");
 
   const handleQuery = useCallback(async () => {
     if (!db) return;
