@@ -1,5 +1,5 @@
 {
-  "name": "deck-minimum-template-js",
+  "name": "vite-duckdb-client",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@duckdb/duckdb-wasm": "^1.30.0",
     "@loaders.gl/core": "^4.3.4",
     "deck.gl": "^9.2.2",
     "react": "^19.2.0",
