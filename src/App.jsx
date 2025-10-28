@@ -107,11 +107,11 @@ export default function App() {
       </DeckGL>
       <div className="attribution">
         <a
-          href="http://www.openstreetmap.org/about/"
+          href="https://maps.gsi.go.jp/development/ichiran.html"
           target="_blank"
           rel="noopener noreferrer"
         >
-          © OpenStreetMap
+          © 地理院タイル
         </a>
       </div>
       <ResultTable table={queryResult} /> {/* テーブル用データ(Arrow Table)を渡す */}
