@@ -10,13 +10,89 @@ body {
     height: 100%;
 }
 
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  width: 100vw;
+  height: 100vh;
+}
+
 .attribution {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    background-color: white;
-    font: 12px Helvetica Neue, Arial, Helvetica, sans-serif;
-    line-height: 12px;
-    padding: 4px;
-    z-index: 9;
+  position: absolute;
+  bottom: 200px; /* Adjust to be above the footer table */
+  right: 0;
+  background-color: hsla(0,0%,100%,.5);
+  padding: 0 5px;
+  font-size: 12px;
+  font-family: sans-serif;
+  z-index: 1;
+}
+
+.control-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  background: #f8f9fa; /* Changed from white to light gray */
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.control-panel input {
+  flex-grow: 1; /* Allow input to take up available space */
+  font-family: monospace;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+.error-panel {
+  color: red;
+  position: absolute;
+  top: 70px; /* Position below the new header */
+  left: 10px;
+  z-index: 1;
+  background: white;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.footer-table-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 200px; /* Fixed height */
+  background: white;
+  z-index: 1;
+  overflow-y: auto; /* Enable vertical scroll */
+  border-top: 1px solid #ddd;
+}
+
+.result-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.result-table th, .result-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+  font-size: 14px;
+  white-space: nowrap; /* Prevent text wrapping */
+}
+
+.result-table th {
+  background-color: #f8f9fa;
+  position: sticky;
+  top: 0; /* Stick header on scroll */
 }

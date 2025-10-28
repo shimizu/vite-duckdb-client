@@ -1,18 +1,10 @@
-import { useEffect, useState } from 'react';
-import * as duckdb from '@duckdb/duckdb-wasm';
+import { useEffect, useState, useCallback } from 'react';
 import DeckGL from '@deck.gl/react';
 import { renderLayers } from './Layers';
+import { useDuckDB } from './hooks/useDuckDB';
+import { executeQuery } from './utils/queries';
+import ResultTable from './components/ResultTable';
 import './index.css';
-
-async function initDB() {
-  const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
-  const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
-  const worker = await duckdb.createWorker(bundle.mainWorker);
-  const logger = new duckdb.ConsoleLogger();
-  const db = new duckdb.AsyncDuckDB(logger, worker);
-  await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
-  return db;
-}
 
 const INITIAL_VIEW_STATE = {
   latitude: 35.681236, // Tokyo station
@@ -22,59 +14,95 @@ const INITIAL_VIEW_STATE = {
   pitch: 0,
 };
 
-export default function App() {
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
+// Arrow TableからGeoJSON FeatureCollectionを生成するヘルパー関数
+function createGeoJsonFromTable(table) {
+  if (!table) return null;
 
-  useEffect(() => {
-    (async () => {
+  // 'geojson'カラムが存在するか確認
+  const geojsonField = table.schema.fields.find(f => f.name === 'geojson');
+  if (!geojsonField) return null;
+
+  const features = table.toArray().map(row => {
+    const geojsonStr = row.geojson;
+    if (typeof geojsonStr === 'string') {
       try {
-        const db = await initDB();
-        const conn = await db.connect();
-
-        await conn.query("INSTALL spatial;");
-        await conn.query("LOAD spatial;");
-
-        const response = await fetch('/data/parquet_police_station.parquet');
-        const buffer = await response.arrayBuffer();
-        await db.registerFileBuffer('data.parquet', new Uint8Array(buffer));
-
-        const result = await conn.query("SELECT ST_AsGeoJSON(geometry) as geojson FROM 'data.parquet';");
-        
-        const features = result.toArray().map(row => {
-            const geojsonStr = row.geojson;
-            if (geojsonStr) {
-                return {
-                    type: 'Feature',
-                    geometry: JSON.parse(geojsonStr),
-                    properties: {} // Add other properties if needed
-                };
-            }
-            return null;
-        }).filter(Boolean);
-
-        const featureCollection = {
-            type: 'FeatureCollection',
-            features: features
+        const properties = { ...row };
+        delete properties.geojson;
+        return {
+          type: 'Feature',
+          geometry: JSON.parse(geojsonStr),
+          properties: properties,
         };
-
-        setData(featureCollection);
-
-        await conn.close();
       } catch (e) {
-        setError(e.toString());
-        console.error(e);
+        console.error("Failed to parse GeoJSON string:", geojsonStr, e);
+        return null;
       }
-    })();
-  }, []);
+    }
+    return null;
+  }).filter(Boolean);
+
+  return {
+    type: 'FeatureCollection',
+    features: features,
+  };
+}
+
+export default function App() {
+  const { db, loading: dbLoading, error: dbError } = useDuckDB();
+  const [queryResult, setQueryResult] = useState(null); // Arrow Tableを保持
+  const [deckGlData, setDeckGlData] = useState(null);   // 地図用のGeoJSONを保持
+  const [queryError, setQueryError] = useState(null);
+  const [isQuerying, setIsQuerying] = useState(false);
+  const [query, setQuery] = useState("SELECT P18_001, P18_004, ST_AsGeoJSON(geometry) as geojson FROM 'https://storage.googleapis.com/g3-open-resource/parquet/police_station2.parquet';");
+
+  const handleQuery = useCallback(async () => {
+    if (!db) return;
+
+    setIsQuerying(true);
+    setQueryError(null);
+    setQueryResult(null);
+    setDeckGlData(null);
+
+    try {
+      const resultTable = await executeQuery(db, query);
+      setQueryResult(resultTable);
+    } catch (e) {
+      setQueryError(e.toString());
+      console.error(e);
+    } finally {
+      setIsQuerying(false);
+    }
+  }, [db, query]);
+
+  // クエリ結果が変わったら、地図用のデータを生成し直す
+  useEffect(() => {
+    if (queryResult) {
+      const geojsonData = createGeoJsonFromTable(queryResult);
+      setDeckGlData(geojsonData);
+    }
+  }, [queryResult]);
+
+  const error = dbError || queryError;
 
   return (
     <div>
-      {error && <div style={{ color: 'red', position: 'absolute', top: 0, left: 0, zIndex: 1, background: 'white', padding: '10px' }}>{error}</div>}
+      {error && <div className="error-panel">{error}</div>}
+      <div className="control-panel">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          disabled={!db || isQuerying}
+        />
+        <button onClick={handleQuery} disabled={!db || isQuerying}>
+          {isQuerying ? '実行中...' : 'クエリ実行'}
+        </button>
+        {dbLoading && <span>DBを初期化中...</span>}
+      </div>
       <DeckGL
         initialViewState={INITIAL_VIEW_STATE}
         controller={true}
-        layers={renderLayers({ data })}
+        layers={renderLayers({ data: deckGlData })} // 地図用データを渡す
       >
       </DeckGL>
       <div className="attribution">
@@ -86,6 +114,7 @@ export default function App() {
           © OpenStreetMap
         </a>
       </div>
+      <ResultTable table={queryResult} /> {/* テーブル用データ(Arrow Table)を渡す */}
     </div>
   );
 }
