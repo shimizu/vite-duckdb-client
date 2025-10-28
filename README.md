@@ -7,6 +7,10 @@
 
 DuckDBの[Spatial Extension](https://duckdb.org/docs/extensions/spatial)を利用して、地理空間データを扱う具体例も示しています。
 
+## demo
+
+https://shimizu.github.io/vite-duckdb-client/
+
 ## 特徴
 
 *   **ブラウザ内データベース**: DuckDB-WASMを使い、サーバーレスでデータ分析を実行
@@ -42,7 +46,42 @@ SELECT *, ST_AsGeoJSON(geometry) as geojson FROM 'https://storage.googleapis.com
 
 入力欄でクエリを自由に変更し、**「クエリ実行」**ボタンを押すことで、DuckDB-WASMの力を試すことができます。
 
-※ 地図に表示されるにはgeometryカラムがST_AsGeoJSON関数によってgeojsonに変換される必要があります（エイリアスはgeojsonにしてください）<br> parquetのフォーマットがGeoParquetであればgeometryカラムは自動的に設定されています。
+※ 地図に表示されるにはgeometryカラムがST_AsGeoJSON関数によってgeojsonに変換される必要があります（エイリアスはgeojsonにしてください）<br> parquetのフォーマットがGeoParquet
 
 
 
+## コードの構成
+
+主要なコードは `src` ディレクトリに配置されています。
+
+*   `main.jsx`: アプリケーションのエントリーポイント。
+*   `App.jsx`: アプリケーションのメインコンポーネント。状態管理、UI、Deck.glの初期化など、全体のロジックを担います。
+*   `index.css`: アプリケーション全体の基本的なスタイリング。
+
+### `src/hooks`
+
+*   `useDuckDB.js`: DuckDB-WASMの初期化とインスタンス管理を行うカスタムフック。これにより、どのコンポーネントからでも簡単にDuckDBインスタンスにアクセスできます。
+
+### `src/utils`
+
+*   `queries.js`: DuckDBのクエリ実行に関するロジックをカプセル化しています。`httpfs`や`spatial`といった必要な拡張機能の読み込みもここで行います。
+
+### `src/components`
+
+*   `ResultTable.jsx`: クエリ結果を画面下部に表示するためのReactコンポーネント。Apache Arrow形式のデータをテーブルとして描画します。
+
+### `src/Layers`
+
+*   `index.js`: Deck.glのレイヤー設定を定義します。ベースマップとしてOpenStreetMapタイルレイヤーを、データ可視化用としてGeoJsonレイヤーを生成します。
+
+## DuckDB-WASM
+
+DuckDB-WASMは、DuckDBをWebAssemblyにコンパイルしたもので、ブラウザ上で直接SQLクエリを実行できる強力なツールです。
+
+詳細は公式ドキュメントを参照してください。
+*   [DuckDB-WASM Documentation](https://duckdb.org/docs/api/wasm.html)
+*   [Available Extensions for DuckDB-WASM](https://shell.duckdb.org/extensions.html)
+
+## ライセンス
+
+このテンプレートはMITライセンスです。
